@@ -5,6 +5,25 @@
     <title>Grid Template Generator</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    <style>
+        /* Optional: Add some custom styling */
+        .color-input-group {
+            display: flex;
+            align-items: center;
+        }
+        .color-input-group input[type="color"] {
+            margin-right: 10px;
+        }
+        .counter-footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f8f9fa;
+            padding: 10px 0;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+    </style>
 </head>
 <body>
     <div class="container my-5">
@@ -61,14 +80,28 @@
 
             <!-- Grid Color -->
             <div class="mb-3">
-                <label for="grid_color" class="form-label">Grid Color:</label>
-                <input type="color" class="form-control form-control-color" id="grid_color" name="grid_color" value="#B7C9EE" title="Choose Grid Color">
+                <label class="form-label">Grid Color:</label>
+                <div class="color-input-group">
+                    <input type="color" class="form-control form-control-color" id="grid_color_picker" name="grid_color_picker" value="#B7C9EE" title="Choose Grid Color">
+                    <input type="text" class="form-control" id="grid_color_text" name="grid_color" placeholder="#B7C9EE" value="#B7C9EE" maxlength="7" required pattern="^#(?:[0-9a-fA-F]{3}){1,2}$">
+                </div>
+                <div class="invalid-feedback">
+                    Please enter a valid hex color code (e.g., #FFFFFF).
+                </div>
+                <div class="form-text">Enter a hex color code or use the color picker.</div>
             </div>
 
             <!-- Background Color -->
             <div class="mb-3">
-                <label for="background_color" class="form-label">Background Color:</label>
-                <input type="color" class="form-control form-control-color" id="background_color" name="background_color" value="#FFFFFF" title="Choose Background Color">
+                <label class="form-label">Background Color:</label>
+                <div class="color-input-group">
+                    <input type="color" class="form-control form-control-color" id="background_color_picker" name="background_color_picker" value="#FFFFFF" title="Choose Background Color">
+                    <input type="text" class="form-control" id="background_color_text" name="background_color" placeholder="#FFFFFF" value="#FFFFFF" maxlength="7" required pattern="^#(?:[0-9a-fA-F]{3}){1,2}$">
+                </div>
+                <div class="invalid-feedback">
+                    Please enter a valid hex color code (e.g., #FFFFFF).
+                </div>
+                <div class="form-text">Enter a hex color code or use the color picker.</div>
             </div>
 
             <!-- Line Thickness -->
@@ -94,8 +127,73 @@
         </form>
     </div>
 
+    <!-- Usage Counter Footer -->
+    <div class="counter-footer">
+        <p>Total PDFs Generated: <strong>{{ count }}</strong></p>
+    </div>
+
     <!-- Bootstrap JS and Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <script>
+        // Toggle between Predefined and Custom Paper Sizes
+        document.getElementById('paper_size_option').addEventListener('change', function() {
+            const predefinedDiv = document.getElementById('predefined_size_div');
+            const customDiv = document.getElementById('custom_size_div');
+            if (this.value === 'predefined') {
+                predefinedDiv.classList.remove('d-none');
+                customDiv.classList.add('d-none');
+            } else {
+                predefinedDiv.classList.add('d-none');
+                customDiv.classList.remove('d-none');
+            }
+        });
+
+        // Synchronize Grid Color Picker and Text Input
+        const gridColorPicker = document.getElementById('grid_color_picker');
+        const gridColorText = document.getElementById('grid_color_text');
+
+        gridColorPicker.addEventListener('input', function() {
+            gridColorText.value = this.value.toUpperCase();
+        });
+
+        gridColorText.addEventListener('input', function() {
+            if (/^#([0-9A-F]{3}){1,2}$/i.test(this.value)) {
+                gridColorPicker.value = this.value;
+                this.classList.remove('is-invalid');
+            } else {
+                this.classList.add('is-invalid');
+            }
+        });
+
+        // Synchronize Background Color Picker and Text Input
+        const backgroundColorPicker = document.getElementById('background_color_picker');
+        const backgroundColorText = document.getElementById('background_color_text');
+
+        backgroundColorPicker.addEventListener('input', function() {
+            backgroundColorText.value = this.value.toUpperCase();
+        });
+
+        backgroundColorText.addEventListener('input', function() {
+            if (/^#([0-9A-F]{3}){1,2}$/i.test(this.value)) {
+                backgroundColorPicker.value = this.value;
+                this.classList.remove('is-invalid');
+            } else {
+                this.classList.add('is-invalid');
+            }
+        });
+
+        // Generate Default Filename
+        document.getElementById('generate_filename').addEventListener('click', function() {
+            const predefinedSize = document.getElementById('predefined_size');
+            let size = predefinedSize.value;
+            if (size === undefined) {
+                size = 'Custom_Size';
+            }
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const defaultFilename = `${size}_grid_${timestamp}.pdf`;
+            document.getElementById('output_filename').value = defaultFilename;
+        });
+    </script>
 </body>
 </html>

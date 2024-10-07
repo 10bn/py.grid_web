@@ -9,6 +9,9 @@ from io import BytesIO
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Replace with a secure key
 
+# Initialize a counter
+pdf_count = 0
+
 def get_available_paper_sizes():
     """
     Retrieve all available paper sizes from reportlab.lib.pagesizes.
@@ -100,6 +103,7 @@ def create_grid_pdf(paper_width_mm, paper_height_mm, grid_size_mm=5, grid_color=
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    global pdf_count  # Declare as global to modify the counter
     if request.method == 'POST':
         # Retrieve form data
         paper_size_option = request.form.get('paper_size_option')
@@ -182,6 +186,9 @@ def index():
                 line_thickness=line_thickness
             )
 
+            # Increment the counter after successful PDF creation
+            pdf_count += 1
+
             return send_file(
                 pdf_buffer,
                 as_attachment=True,
@@ -194,8 +201,8 @@ def index():
 
     # GET request
     predefined_size_names = sorted(AVAILABLE_PAPER_SIZES.keys())
-    return render_template('index.html', predefined_sizes=predefined_size_names)
+    return render_template('index.html', predefined_sizes=predefined_size_names, count=pdf_count)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Default to 5000 if PORT isn't set
+    port = int(os.environ.get("PORT", 5010))  # Default to 5000 if PORT isn't set
     app.run(host='0.0.0.0', port=port)
