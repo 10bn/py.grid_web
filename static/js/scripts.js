@@ -47,14 +47,31 @@ backgroundColorText.addEventListener('input', function() {
     }
 });
 
-// Generate Default Filename
+// Generate Default Filename - Updated to include parameters
 document.getElementById('generate_filename').addEventListener('click', function() {
-    const predefinedSize = document.getElementById('predefined_size');
-    let size = predefinedSize.value;
-    if (size === undefined) {
-        size = 'Custom_Size';
+    const paperSizeOption = document.getElementById('paper_size_option').value;
+    let paperSize = '';
+
+    if (paperSizeOption === 'predefined') {
+        const predefinedSize = document.getElementById('predefined_size').value;
+        paperSize = predefinedSize;
+    } else if (paperSizeOption === 'custom') {
+        const customWidth = document.getElementById('custom_width_cm').value;
+        const customHeight = document.getElementById('custom_height_cm').value;
+        paperSize = `Custom_${customWidth}x${customHeight}cm`;
+    } else {
+        paperSize = 'UnknownSize';
     }
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const defaultFilename = `${size}_grid_${timestamp}.pdf`;
-    document.getElementById('output_filename').value = defaultFilename;
+
+    const gridSize = document.getElementById('grid_size_mm').value;
+    const gridColor = document.getElementById('grid_color_text').value.replace('#', '');
+    const lineThickness = document.getElementById('line_thickness').value;
+
+    // Construct the filename
+    const defaultFilename = `${paperSize}_grid_${gridSize}mm_${gridColor}_${lineThickness}pt.pdf`;
+
+    // Replace any spaces or invalid characters with underscores
+    const sanitizedFilename = defaultFilename.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
+
+    document.getElementById('output_filename').value = sanitizedFilename;
 });
