@@ -29,31 +29,43 @@
     <div class="container my-5">
         <h1 class="text-center mb-4">Grid Template Generator</h1>
         
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+        {% if errors %}
+            <div class="alert alert-danger">
+                <ul>
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {% if messages %}
+            <div class="alert alert-success">
+                <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
         
         <form method="POST" action="{{ url_for('index') }}">
             <!-- Paper Size Selection -->
             <div class="mb-3">
-                <label for="paper_size_option" class="form-label">Paper Size:</label>
-                <select class="form-select" id="paper_size_option" name="paper_size_option" required>
-                    <option value="predefined" selected>Predefined</option>
-                    <option value="custom">Custom</option>
-                </select>
+                <label class="form-label">Paper Size:</label>
+                <div>
+                    <input type="radio" id="predefined_option" name="paper_size_option" value="predefined" checked>
+                    <label for="predefined_option">Predefined</label>
+                    &nbsp;&nbsp;
+                    <input type="radio" id="custom_option" name="paper_size_option" value="custom">
+                    <label for="custom_option">Custom</label>
+                </div>
             </div>
 
             <!-- Predefined Sizes -->
             <div class="mb-3" id="predefined_size_div">
-                <label for="predefined_size" class="form-label">Select Size:</label>
-                <select class="form-select" id="predefined_size" name="predefined_size" required>
+                <label for="predefined_size" class="form-label">Select Predefined Size:</label>
+                <select class="form-select" id="predefined_size" name="predefined_size">
                     {% for size in predefined_sizes %}
                         <option value="{{ size }}">{{ size }}</option>
                     {% endfor %}
@@ -61,13 +73,13 @@
             </div>
 
             <!-- Custom Sizes -->
-            <div id="custom_size_div" class="d-none">
+            <div id="custom_size_div" style="display: none;">
                 <div class="mb-3">
-                    <label for="custom_width_cm" class="form-label">Width (cm):</label>
+                    <label for="custom_width_cm" class="form-label">Custom Width (cm):</label>
                     <input type="number" step="0.1" min="0.1" class="form-control" id="custom_width_cm" name="custom_width_cm" placeholder="e.g., 21.0">
                 </div>
                 <div class="mb-3">
-                    <label for="custom_height_cm" class="form-label">Height (cm):</label>
+                    <label for="custom_height_cm" class="form-label">Custom Height (cm):</label>
                     <input type="number" step="0.1" min="0.1" class="form-control" id="custom_height_cm" name="custom_height_cm" placeholder="e.g., 29.7">
                 </div>
             </div>
@@ -75,48 +87,31 @@
             <!-- Grid Size -->
             <div class="mb-3">
                 <label for="grid_size_mm" class="form-label">Grid Size (mm):</label>
-                <input type="number" step="0.1" min="0.1" class="form-control" id="grid_size_mm" name="grid_size_mm" value="5.0" required>
+                <input type="number" step="0.1" min="0.1" class="form-control" id="grid_size_mm" name="grid_size_mm" value="5.0">
             </div>
 
             <!-- Grid Color -->
             <div class="mb-3">
                 <label class="form-label">Grid Color:</label>
-                <div class="color-input-group">
-                    <input type="color" class="form-control form-control-color" id="grid_color_picker" name="grid_color_picker" value="#B7C9EE" title="Choose Grid Color">
-                    <input type="text" class="form-control" id="grid_color_text" name="grid_color" placeholder="#B7C9EE" value="#B7C9EE" maxlength="7" required pattern="^#(?:[0-9a-fA-F]{3}){1,2}$">
-                </div>
-                <div class="invalid-feedback">
-                    Please enter a valid hex color code (e.g., #FFFFFF).
-                </div>
-                <div class="form-text">Enter a hex color code or use the color picker.</div>
+                <input type="color" class="form-control form-control-color" id="grid_color" name="grid_color" value="#B7C9EE" title="Choose Grid Color">
             </div>
 
             <!-- Background Color -->
             <div class="mb-3">
                 <label class="form-label">Background Color:</label>
-                <div class="color-input-group">
-                    <input type="color" class="form-control form-control-color" id="background_color_picker" name="background_color_picker" value="#FFFFFF" title="Choose Background Color">
-                    <input type="text" class="form-control" id="background_color_text" name="background_color" placeholder="#FFFFFF" value="#FFFFFF" maxlength="7" required pattern="^#(?:[0-9a-fA-F]{3}){1,2}$">
-                </div>
-                <div class="invalid-feedback">
-                    Please enter a valid hex color code (e.g., #FFFFFF).
-                </div>
-                <div class="form-text">Enter a hex color code or use the color picker.</div>
+                <input type="color" class="form-control form-control-color" id="background_color" name="background_color" value="#FFFFFF" title="Choose Background Color">
             </div>
 
             <!-- Line Thickness -->
             <div class="mb-3">
                 <label for="line_thickness" class="form-label">Line Thickness (pt):</label>
-                <input type="number" step="0.1" min="0.1" class="form-control" id="line_thickness" name="line_thickness" value="0.3" required>
+                <input type="number" step="0.1" min="0.1" class="form-control" id="line_thickness" name="line_thickness" value="0.3">
             </div>
 
             <!-- Output Filename -->
             <div class="mb-3">
                 <label for="output_filename" class="form-label">Output Filename:</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="output_filename" name="output_filename" placeholder="e.g., A4_grid.pdf" required>
-                    <button class="btn btn-outline-secondary" type="button" id="generate_filename">Generate Default</button>
-                </div>
+                <input type="text" class="form-control" id="output_filename" name="output_filename" placeholder="e.g., grid_template.pdf" value="{{ output_filename }}">
                 <div class="form-text">Ensure the filename ends with .pdf</div>
             </div>
 
@@ -132,68 +127,58 @@
         <p>Total PDFs Generated: <strong>{{ count }}</strong></p>
     </div>
 
-    <!-- Bootstrap JS and Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <!-- Minimal JavaScript for Toggling and Filename Update -->
     <script>
         // Toggle between Predefined and Custom Paper Sizes
-        document.getElementById('paper_size_option').addEventListener('change', function() {
-            const predefinedDiv = document.getElementById('predefined_size_div');
-            const customDiv = document.getElementById('custom_size_div');
-            if (this.value === 'predefined') {
-                predefinedDiv.classList.remove('d-none');
-                customDiv.classList.add('d-none');
+        document.getElementById('predefined_option').addEventListener('change', function() {
+            document.getElementById('predefined_size_div').style.display = 'block';
+            document.getElementById('custom_size_div').style.display = 'none';
+            updateFilename();
+        });
+
+        document.getElementById('custom_option').addEventListener('change', function() {
+            document.getElementById('predefined_size_div').style.display = 'none';
+            document.getElementById('custom_size_div').style.display = 'block';
+            updateFilename();
+        });
+
+        // Update filename based on form inputs
+        function updateFilename() {
+            let paperSizeOption = document.querySelector('input[name="paper_size_option"]:checked').value;
+            let paperSize = '';
+
+            if (paperSizeOption === 'predefined') {
+                paperSize = document.getElementById('predefined_size').value;
             } else {
-                predefinedDiv.classList.add('d-none');
-                customDiv.classList.remove('d-none');
+                let customWidth = document.getElementById('custom_width_cm').value || 'CustomWidth';
+                let customHeight = document.getElementById('custom_height_cm').value || 'CustomHeight';
+                paperSize = `${customWidth}x${customHeight}cm`;
             }
-        });
 
-        // Synchronize Grid Color Picker and Text Input
-        const gridColorPicker = document.getElementById('grid_color_picker');
-        const gridColorText = document.getElementById('grid_color_text');
+            let gridSize = document.getElementById('grid_size_mm').value || 'GridSize';
+            let gridColor = document.getElementById('grid_color').value.replace('#', '') || 'GridColor';
+            let backgroundColor = document.getElementById('background_color').value.replace('#', '') || 'BGColor';
+            let lineThickness = document.getElementById('line_thickness').value || 'LineThickness';
 
-        gridColorPicker.addEventListener('input', function() {
-            gridColorText.value = this.value.toUpperCase();
-        });
+            let filename = `${paperSize}_grid_${gridSize}mm_${gridColor}_bg${backgroundColor}_${lineThickness}pt.pdf`;
 
-        gridColorText.addEventListener('input', function() {
-            if (/^#([0-9A-F]{3}){1,2}$/i.test(this.value)) {
-                gridColorPicker.value = this.value;
-                this.classList.remove('is-invalid');
-            } else {
-                this.classList.add('is-invalid');
-            }
-        });
+            // Replace any spaces or invalid characters with underscores
+            filename = filename.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_.-]/g, '');
 
-        // Synchronize Background Color Picker and Text Input
-        const backgroundColorPicker = document.getElementById('background_color_picker');
-        const backgroundColorText = document.getElementById('background_color_text');
+            document.getElementById('output_filename').value = filename;
+        }
 
-        backgroundColorPicker.addEventListener('input', function() {
-            backgroundColorText.value = this.value.toUpperCase();
-        });
+        // Add event listeners to update the filename when inputs change
+        document.getElementById('predefined_size').addEventListener('change', updateFilename);
+        document.getElementById('custom_width_cm').addEventListener('input', updateFilename);
+        document.getElementById('custom_height_cm').addEventListener('input', updateFilename);
+        document.getElementById('grid_size_mm').addEventListener('input', updateFilename);
+        document.getElementById('grid_color').addEventListener('input', updateFilename);
+        document.getElementById('background_color').addEventListener('input', updateFilename);
+        document.getElementById('line_thickness').addEventListener('input', updateFilename);
 
-        backgroundColorText.addEventListener('input', function() {
-            if (/^#([0-9A-F]{3}){1,2}$/i.test(this.value)) {
-                backgroundColorPicker.value = this.value;
-                this.classList.remove('is-invalid');
-            } else {
-                this.classList.add('is-invalid');
-            }
-        });
-
-        // Generate Default Filename
-        document.getElementById('generate_filename').addEventListener('click', function() {
-            const predefinedSize = document.getElementById('predefined_size');
-            let size = predefinedSize.value;
-            if (size === undefined) {
-                size = 'Custom_Size';
-            }
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const defaultFilename = `${size}_grid_${timestamp}.pdf`;
-            document.getElementById('output_filename').value = defaultFilename;
-        });
+        // Initialize the filename on page load
+        updateFilename();
     </script>
 </body>
 </html>

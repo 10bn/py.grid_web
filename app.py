@@ -1,16 +1,48 @@
 import os
 import inspect
-from flask import Flask, render_template, request, send_file, redirect, url_for, flash
+import sqlite3
+from flask import Flask, render_template, request, send_file, redirect, url_for
+
 from reportlab.pdfgen import canvas
 from reportlab.lib import pagesizes
-from reportlab.lib.units import mm, cm
+from reportlab.lib.units import mm
 from io import BytesIO
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Replace with a secure key
 
-# Initialize a counter
-pdf_count = 0
+DATABASE = 'statistics.db'
+
+def init_db():
+    """Initialize the database and create the statistics table if it doesn't exist."""
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS statistics (
+            id INTEGER PRIMARY KEY,
+            pdf_count INTEGER DEFAULT 0
+        )
+    ''')
+    # Ensure there's a row in the table
+    c.execute('SELECT COUNT(*) FROM statistics')
+    if c.fetchone()[0] == 0:
+        c.execute('INSERT INTO statistics (pdf_count) VALUES (0)')
+    conn.commit()
+    conn.close()
+
+def increment_pdf_count():
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute('UPDATE statistics SET pdf_count = pdf_count + 1 WHERE id = 1')
+    conn.commit()
+    conn.close()
+
+def get_pdf_count():
+    conn = sqlite3.connect(DATABASE)
+    c = conn.cursor()
+    c.execute('SELECT pdf_count FROM statistics WHERE id = 1')
+    count = c.fetchone()[0]
+    conn.close()
+    return count
 
 def get_available_paper_sizes():
     """
@@ -32,7 +64,7 @@ def validate_hex_color(hex_color):
     if not isinstance(hex_color, str):
         return False
     if not hex_color.startswith("#"):
-        return False
+            return False
     if len(hex_color) not in [4, 7]:
         return False
     hex_digits = "0123456789ABCDEFabcdef"
@@ -42,7 +74,7 @@ def validate_hex_color(hex_color):
     return True
 
 def create_grid_pdf(paper_width_mm, paper_height_mm, grid_size_mm=5, grid_color="#B7C9EE",
-                   background_color="#FFFFFF", line_thickness=0.3):
+                    background_color="#FFFFFF", line_thickness=0.3):
     """
     Create a vector-based grid PDF using ReportLab with specified paper size and background color.
     
@@ -103,7 +135,11 @@ def create_grid_pdf(paper_width_mm, paper_height_mm, grid_size_mm=5, grid_color=
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    global pdf_count  # Declare as global to modify the counter
+    errors = []
+    messages = []
+    predefined_size_names = sorted(AVAILABLE_PAPER_SIZES.keys())
+    pdf_count = get_pdf_count()
+
     if request.method == 'POST':
         # Retrieve form data
         paper_size_option = request.form.get('paper_size_option')
@@ -117,8 +153,6 @@ def index():
         output_filename = request.form.get('output_filename')
 
         # Validation
-        errors = []
-
         # Paper size
         if paper_size_option == 'predefined':
             if predefined_size not in AVAILABLE_PAPER_SIZES:
@@ -166,15 +200,14 @@ def index():
 
         # Output filename
         if not output_filename.strip():
-            errors.append("Output filename cannot be empty.")
+            output_filename = "grid_template.pdf"
         elif not output_filename.lower().endswith('.pdf'):
             output_filename += '.pdf'
 
         if errors:
-            for error in errors:
-                flash(error, 'danger')
-            return redirect(url_for('index'))
-
+            # Render the form with errors
+            return render_template('index.html', predefined_sizes=predefined_size_names, errors=errors, messages=messages, count=pdf_count, output_filename=output_filename)
+        
         # Generate PDF
         try:
             pdf_buffer = create_grid_pdf(
@@ -185,10 +218,9 @@ def index():
                 background_color=background_color,
                 line_thickness=line_thickness
             )
-
-            # Increment the counter after successful PDF creation
-            pdf_count += 1
-
+            # Increment the PDF count
+            increment_pdf_count()
+            pdf_count += 1  # Update the count for display
             return send_file(
                 pdf_buffer,
                 as_attachment=True,
@@ -196,13 +228,14 @@ def index():
                 mimetype='application/pdf'
             )
         except Exception as e:
-            flash(str(e), 'danger')
-            return redirect(url_for('index'))
+            errors.append(str(e))
+            return render_template('index.html', predefined_sizes=predefined_size_names, errors=errors, messages=messages, count=pdf_count, output_filename=output_filename)
 
     # GET request
-    predefined_size_names = sorted(AVAILABLE_PAPER_SIZES.keys())
-    return render_template('index.html', predefined_sizes=predefined_size_names, count=pdf_count)
+    output_filename = "grid_template.pdf"
+    return render_template('index.html', predefined_sizes=predefined_size_names, errors=errors, messages=messages, count=pdf_count, output_filename=output_filename)
 
 if __name__ == "__main__":
+    init_db()
     port = int(os.environ.get("PORT", 5010))  # Default to 5000 if PORT isn't set
     app.run(host='0.0.0.0', port=port)
