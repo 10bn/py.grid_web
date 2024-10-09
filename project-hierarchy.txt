@@ -1,0 +1,15 @@
+py.grid_web
+├─ Procfile
+├─ app.py
+├─ merge.py
+├─ merged.txt
+├─ project-hierarchy.txt
+├─ requirements.txt
+├─ setup.py
+├─ static
+│  ├─ css
+│  │  └─ styles.css
+│  └─ js
+│     └─ scripts.js
+└─ templates
+   └─ index.html
